@@ -1,39 +1,42 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:music_player/Custom%20Widgets/CustomWidgets.dart';
-import 'package:music_player/screens/login.dart';
-import 'package:music_player/screens/registration.dart';
-
-import 'MainScreen.dart';
+import 'package:music_player/Methods/AuthMethods/Auth.dart';
+import 'package:music_player/screens/AuthenticationScreens/login.dart';
+import 'package:music_player/screens/AuthenticationScreens/registration.dart';
+import 'package:music_player/screens/MainScreen.dart';
+import 'package:music_player/screens/Search.dart';
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
   @override
   State<SignUpPage> createState() => _SignUpPageState();
 }
-
 class _SignUpPageState extends State<SignUpPage> {
+  SignInAuthentication authentication=SignInAuthentication();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         child: Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              fit: BoxFit.fitHeight,
-              image: AssetImage("lib/assets/images/music-794506_1920.jpg"),
-            )
+          alignment: Alignment.bottomCenter,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+                colors: [Colors.black45, Colors.teal, Colors.black45],
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                tileMode: TileMode.clamp),
           ),
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Column(
                 children: [
-                  Padding(padding: EdgeInsets.symmetric(vertical: 10),child:Container(
+                  Padding(padding: EdgeInsets.only(bottom: 100),child:Container(
                     width: MediaQuery.of(context).size.width,
-                    height: 270,
+                    height: 370,
                     child: Image(image: AssetImage("lib/assets/images/headphone-removebg-preview.png"),fit: BoxFit.cover,),
                   ),),
                   Padding(
@@ -45,16 +48,27 @@ class _SignUpPageState extends State<SignUpPage> {
                           elevation: 0,
                             shape: RoundedRectangleBorder(borderRadius:BorderRadius.circular(28),side: BorderSide(color: Colors.black))
                         ),
-                        child:Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: Colors.transparent,
-                                child: Image.asset("lib/assets/images/google_logo-removebg-preview.png")),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 40.0),
-                              child: Text("Sign In with Google",style: TextStyle(color:Colors.black),),
-                            )
-                           ],
+                        child:InkWell(
+                          onTap: ()async{
+                          User? myuser=await authentication.signInWithGoogle(context:context);
+                            if(myuser!=null)
+                              {
+                                Navigator.pushReplacement(context,MaterialPageRoute(builder:(context){
+                                  return SearchScreen(user: myuser,);
+                                }));
+                              }
+                          },
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: Colors.grey.shade300,
+                                  child: Image.asset("lib/assets/images/google_logo-removebg-preview.png")),
+                              const Padding(
+                                padding: EdgeInsets.only(left: 40.0),
+                                child: Text("Sign In with Google",style: TextStyle(color:Colors.black,letterSpacing: 1),),
+                              )
+                             ],
+                          ),
                         )
                     ),
                   ),
@@ -67,7 +81,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ElevatedButton(
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Text("Sign Up"),
+                        child: Text("Sign Up",style: TextStyle(letterSpacing: 1),),
                       ),
                       onPressed:(){
                         Navigator.pushReplacement(context,MaterialPageRoute(builder:(context){
@@ -76,11 +90,12 @@ class _SignUpPageState extends State<SignUpPage> {
                       },
                     ),
                   ),
-                  TextButton(onPressed:(){
+                  TextButton(
+                      onPressed:(){
                     Navigator.pushReplacement(context,MaterialPageRoute(builder:(context){
                       return LoginPage();
                     }));
-                  }, child:Text("Already a user !",style: TextStyle(color: Colors.pinkAccent,fontSize: 16,fontWeight: FontWeight.w400),)),
+                  }, child:Text("Already a user !",style: TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.w400,letterSpacing: 1),)),
                 ],
               )
 
