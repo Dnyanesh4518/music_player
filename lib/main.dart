@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:music_player/screens/AuthenticationScreens/Signup.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:music_player/screens/Search.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -53,7 +55,28 @@ class MyApp extends StatelessWidget {
             )
         ),
       ),
-      home:const SignUpPage(),
+      home:StreamBuilder(
+        stream:FirebaseAuth.instance.authStateChanges(),
+        builder: (context,snapshot){
+          if(snapshot.connectionState==ConnectionState.active)
+            {
+              User? user= snapshot.data;
+             return SearchScreen(user: user);
+            }
+          if(snapshot.connectionState==ConnectionState.waiting)
+            {
+              return const Center(child: CircularProgressIndicator(color: Colors.blueAccent,semanticsLabel:"Signing you in"),);
+            }
+          if(snapshot.hasError)
+            {
+              return const ScaffoldMessenger(child: SnackBar(content:Text("Something went wrong"),));
+            }
+          else {
+            return const SignUpPage();
+          }
+        },
+
+      ),
     );
   }
 }

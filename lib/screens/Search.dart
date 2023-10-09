@@ -2,13 +2,15 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:music_player/screens/MainScreen.dart';
-import '../APIResponse/SearchResponse/Search.dart';
+import 'package:music_player/APIResponse/SpotifyResponse/SpotifySearch.dart';
+import 'package:music_player/MusicData/assetLists.dart';
+import 'package:music_player/screens/AuthenticationScreens/Signup.dart';
+import 'package:music_player/screens/Player.dart';
 import '../Methods/AuthMethods/Auth.dart';
 
 class SearchScreen extends StatefulWidget {
-  SearchScreen({super.key,required User user}): _user = user;
-  final User _user;
+  const SearchScreen({super.key,required User? user}): _user = user;
+  final User? _user;
   @override
   State<SearchScreen> createState() => _SearchScreenState();
 }
@@ -27,27 +29,26 @@ class _SearchScreenState extends State<SearchScreen> {
     _user = widget._user;
     super.initState();
   }
-  Future<Search> searchMusic(String query) async {
-    String url = "https://deezerdevs-deezer.p.rapidapi.com/search?q=$query";
+  Future<SpotifySearch> searchMusic(String query) async {
+    String url = "https://spotify23.p.rapidapi.com/search/?q=$query& type=tracks&limit=30";
     final Uri uri = Uri.parse(url);
     try {
       final response = await http.get(
         uri,
         headers: {
           'X-RapidAPI-Key':
-              '14dbbc7971mshf61483edba36eaap1bfe3ejsnac110126b45c',
-          'X-RapidAPI-Host': 'deezerdevs-deezer.p.rapidapi.com'
+              '8bb677b6ddmsh4de3e0cdc9b6c71p198c53jsnc6acc99abeeb',
+          'X-RapidAPI-Host': 'spotify23.p.rapidapi.com'
         },
       );
       if (response.statusCode == 200) {
-        final search = Search.fromJson(jsonDecode(response.body.toString()));
+        final search = SpotifySearch.fromJson(jsonDecode(response.body.toString()));
         return search;
       } else if (response.statusCode == 429 && retryCount < 3) {
         await Future.delayed(const Duration(seconds: 5));
         retryCount++;
       }
-      print(response.statusCode);
-      return Search();
+      return searchMusic(query);
     } catch (e) {
       throw Exception('Error: $e');
     }
@@ -55,7 +56,8 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     bool textEntered = false;
-    return Scaffold(
+    return
+      Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
         leading: InkWell(
@@ -91,13 +93,28 @@ class _SearchScreenState extends State<SearchScreen> {
                           child: CircleAvatar(
                             backgroundColor: Colors.grey,
                             radius: 30,
-                            child: Text(_user!.displayName!.substring(0,1).toString(),
+                            child: Text(_user?.displayName?.substring(0,1).toString()??'',
                               style: const TextStyle(fontSize: 30,color: Colors.white),
                             ),
                           ),
                         ),
                         IconButton(onPressed:()async{
-                          await  authentication.signOut(context);
+                           FutureBuilder(
+                            future: authentication.signOut(),
+                            builder: (context,snapshot){
+                              if(snapshot.connectionState==ConnectionState.waiting)
+                              {
+                                return const Center(child: CircularProgressIndicator(color: Colors.blueAccent,semanticsLabel:"Logging out "),);
+                              }
+                              else if(snapshot.connectionState==ConnectionState.done)
+                              {
+                                return const SignUpPage();
+                              }
+                              else {
+                                return  const ScaffoldMessenger(child: SnackBar(content:Text("Something went wrong"),));
+                              }
+                            },
+                          );
                         }, icon:const Icon(Icons.exit_to_app,color: Colors.white,size: 30,))
                       ],
                     ),
@@ -105,77 +122,12 @@ class _SearchScreenState extends State<SearchScreen> {
                       width: 25,
                     ),
                     Text(
-                      _user!.displayName.toString(),
+                      _user?.displayName.toString()??'Person',
                       style: const TextStyle(fontSize: 22, color: Colors.white),
                     ),
-                    // Text(
-                    //   _user.email.toString(),
-                    //   style: const TextStyle(fontSize: 15, color: Colors.white),
-                    // )
-
                   ],
                 ),
               ),
-              // const ListTile(
-              //   contentPadding:
-              //       EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-              //   title: Text(
-              //     "Favourites",
-              //     style: TextStyle(fontSize: 20),
-              //   ),
-              // ),
-              // const Divider(
-              //   color: Colors.black,
-              //   height: 2,
-              // ),
-              // const ListTile(
-              //   contentPadding:
-              //       EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-              //   title: Text(
-              //     "Favourites",
-              //     style: TextStyle(fontSize: 20),
-              //   ),
-              // ),
-              // const Divider(
-              //   color: Colors.black,
-              //   height: 2,
-              // ),
-              // const ListTile(
-              //   contentPadding:
-              //       EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-              //   title: Text(
-              //     "Favourites",
-              //     style: TextStyle(fontSize: 20),
-              //   ),
-              // ),
-              // const Divider(
-              //   color: Colors.black,
-              //   height: 2,
-              // ),
-              // const ListTile(
-              //   contentPadding:
-              //       EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-              //   title: Text(
-              //     "Favourites",
-              //     style: TextStyle(fontSize: 20),
-              //   ),
-              // ),
-              // const Divider(
-              //   color: Colors.black,
-              //   height: 2,
-              // ),
-              // const ListTile(
-              //   contentPadding:
-              //       EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-              //   title: Text(
-              //     "Favourites",
-              //     style: TextStyle(fontSize: 20),
-              //   ),
-              // ),
-              // const Divider(
-              //   color: Colors.black,
-              //   height: 2,
-              // ),
             ],
           ),
         ),
@@ -248,15 +200,16 @@ class _SearchScreenState extends State<SearchScreen> {
                                 FocusScope.of(context).unfocus();
                                 searchMusic(query);
                               },
-                              child: Icon(Icons.search)),
+                              child: const Icon(Icons.search)),
                           suffixIconColor: Colors.black),
                     ),
                   ),
                 ),
               ),
               hasData
-                  ? Expanded(
-                      child: FutureBuilder<Search>(
+                  ? 
+              Expanded(
+                      child: FutureBuilder<SpotifySearch>(
                           future: searchMusic(query),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
@@ -268,37 +221,42 @@ class _SearchScreenState extends State<SearchScreen> {
                                     Text('Error: ${snapshot.error.toString()}'),
                               );
                             } else {
-                              final search = snapshot.data ?? Search();
-                              if (search.data == null || search.data!.isEmpty) {
+                              final search = snapshot.data ?? SpotifySearch();
+                              if(search.tracks?.items?.isNotEmpty??false) {
+                                int i=0;
+                                while(i<(search.tracks?.items?.length??0))
+                                {
+                                  musicIdList.add(search.tracks!.items![i].data!.id.toString());
+                                  i++;
+                                }
+                              }
+                              if (search == null) {
                                 return const ListTile(
                                   title: Text("No match Found"),
                                 );
-                              } else {
+                              }
+                              else {
                                 return ListView.separated(
-                                  itemCount: search.data!.length,
+                                  itemCount: search.tracks!.items!.length,
                                   itemBuilder: (context, index) {
                                     return ListTile(
-                                      title: Text(
-                                          search!.data![index]!.title ?? ''),
-                                      subtitle: Text(search
-                                          .data![index].artist!.name
-                                          .toString()),
+                                      title: Text(search.tracks!.items![index]?.data?.name ?? ''),
+                                      subtitle: Text(search.tracks!.items![index]?.data?.albumOfTrack?.name??''),
                                       leading: CircleAvatar(
                                         radius: 25,
                                         child: Image.network(
-                                          search.data![index].album!.cover
-                                              .toString(),
+                                          search.tracks!.items![index]?.data?.albumOfTrack?.coverArt?.sources?[1].url??'',
+                                          width: search.tracks!.items![index]?.data?.albumOfTrack?.coverArt?.sources?[1].width?.toDouble() ?? 0,
+                                          height: search.tracks!.items![index]?.data?.albumOfTrack?.coverArt?.sources?[1].height?.toDouble() ?? 0,
                                           fit: BoxFit.cover,
                                         ),
                                       ),
                                       onTap: () {
-                                        print(
-                                            search.data![index].id.toString());
-                                        Navigator.push(context,
-                                            MaterialPageRoute(
-                                                builder: (context) {
-                                          return MainScreen(
-                                            MusicId: search.data![index].id.toString(),
+                                        Navigator.push(context, MaterialPageRoute( builder: (context) {
+                                          return MusicPlayer(
+                                            smallimg: search.tracks!.items![index].data?.albumOfTrack?.coverArt?.sources?[2].url ?? '',
+                                            img: search.tracks!.items![index].data?.albumOfTrack?.coverArt?.sources?[0].url ?? '',
+                                            Id: search.tracks!.items![index].data?.id.toString() ?? '',
                                           );
                                         }));
                                       },
@@ -315,7 +273,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             }
                           }),
                     )
-                  : const Text("")
+                  : Text("")
             ],
           )),
     );

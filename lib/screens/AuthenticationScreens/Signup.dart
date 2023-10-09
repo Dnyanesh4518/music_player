@@ -1,9 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:music_player/Methods/AuthMethods/Auth.dart';
-import 'package:music_player/screens/AuthenticationScreens/login.dart';
-import 'package:music_player/screens/AuthenticationScreens/registration.dart';
-import 'package:music_player/screens/MainScreen.dart';
 import 'package:music_player/screens/Search.dart';
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -16,7 +12,8 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
+      body:
+      SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         child: Container(
           alignment: Alignment.bottomCenter,
@@ -49,14 +46,24 @@ class _SignUpPageState extends State<SignUpPage> {
                             shape: RoundedRectangleBorder(borderRadius:BorderRadius.circular(28),side: BorderSide(color: Colors.black))
                         ),
                         child:InkWell(
-                          onTap: ()async{
-                          User? myuser=await authentication.signInWithGoogle(context:context);
-                            if(myuser!=null)
-                              {
-                                Navigator.pushReplacement(context,MaterialPageRoute(builder:(context){
-                                  return SearchScreen(user: myuser,);
-                                }));
-                              }
+                          onTap: (){
+                            FutureBuilder(
+                              future: authentication.signInWithGoogle(),
+                              builder: (context,snapshot){
+                                if(snapshot.connectionState==ConnectionState.waiting)
+                                  {
+                                    return const Center(child: CircularProgressIndicator(color: Colors.blueAccent,semanticsLabel:"Signing you in"),);
+                                  }
+                               else if(snapshot.connectionState==ConnectionState.done)
+                                  {
+                                     return SearchScreen(user: snapshot.data);
+                                  }
+                               else {
+                                 return  const ScaffoldMessenger(child: SnackBar(content:Text("Something went wrong"),));
+                                 ;
+                                }
+                              },
+                            );
                           },
                           child: Row(
                             children: [
@@ -72,30 +79,28 @@ class _SignUpPageState extends State<SignUpPage> {
                         )
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18.0,vertical: 10.0),
-                    width: MediaQuery.of(context).size.width,
-                    decoration: BoxDecoration(
-                    ),
-                    child:
-                    ElevatedButton(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text("Sign Up",style: TextStyle(letterSpacing: 1),),
-                      ),
-                      onPressed:(){
-                        Navigator.pushReplacement(context,MaterialPageRoute(builder:(context){
-                          return Registration();
-                        }));
-                      },
-                    ),
-                  ),
-                  TextButton(
-                      onPressed:(){
-                    Navigator.pushReplacement(context,MaterialPageRoute(builder:(context){
-                      return LoginPage();
-                    }));
-                  }, child:Text("Already a user !",style: TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.w400,letterSpacing: 1),)),
+                  // Container(
+                  //   padding: const EdgeInsets.symmetric(horizontal: 18.0,vertical: 10.0),
+                  //   width: MediaQuery.of(context).size.width,
+                  //   child:
+                  //   ElevatedButton(
+                  //     child: const Padding(
+                  //       padding: EdgeInsets.all(8.0),
+                  //       child: Text("Sign Up",style: TextStyle(letterSpacing: 1),),
+                  //     ),
+                  //     onPressed:(){
+                  //       Navigator.pushReplacement(context,MaterialPageRoute(builder:(context){
+                  //         return Registration();
+                  //       }));
+                  //     },
+                  //   ),
+                  // ),
+                  // TextButton(
+                  //     onPressed:(){
+                  //   Navigator.pushReplacement(context,MaterialPageRoute(builder:(context){
+                  //     return LoginPage();
+                  //   }));
+                  // }, child:Text("Already a user !",style: TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.w400,letterSpacing: 1),)),
                 ],
               )
 
